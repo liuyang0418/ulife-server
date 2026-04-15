@@ -1,0 +1,10 @@
+.env
+.env.local
+.env.production
+node_modules/
+logs/
+*.log
+dist/
+.DS_Store
+Thumbs.db
+/opt/backups/
