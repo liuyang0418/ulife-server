@@ -5,9 +5,11 @@ const router = require('express').Router()
 const { authenticate, requireRole } = require('../middleware/auth')
 const ctrl   = require('../controllers/taskAssignmentController')
 
+const auth  = [authenticate]
 const staff = [authenticate, requireRole('caregiver', 'admin')]
 
-router.get('/',        ...staff, (r, s, n) => ctrl.list(r, s).catch(n))
+// 老人可查自己的任务列表；管家/admin 可传 customer_id 查指定老人
+router.get('/',        ...auth,  (r, s, n) => ctrl.list(r, s).catch(n))
 router.post('/',       ...staff, (r, s, n) => ctrl.assign(r, s).catch(n))
 router.patch('/:id',   ...staff, (r, s, n) => ctrl.updateStatus(r, s).catch(n))
 

@@ -13,6 +13,9 @@ router.post('/',                       ...staff, (r, s, n) => ctrl.start(r, s).c
 // ─── 历史测评列表（?customer_id=xxx）─────────────────────────
 router.get('/',                        ...staff, (r, s, n) => ctrl.list(r, s).catch(n))
 
+// ─── 可用试卷列表 ─────────────────────────────────────────────
+router.get('/papers',                  ...staff, (r, s, n) => ctrl.listPapers(r, s).catch(n))
+
 // ─── 测评详情 ─────────────────────────────────────────────────
 router.get('/:id',                     ...staff, (r, s, n) => ctrl.detail(r, s).catch(n))
 

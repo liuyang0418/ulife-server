@@ -5,6 +5,22 @@ const MessageService = require('../services/messageService')
 
 class FamilyController {
 
+  // ─── 按手机号查找老人（家属端申请绑定前用）──────────────────
+  // GET /api/family/find-elder?phone=xxx
+  async findElderByPhone(req, res) {
+    const { phone } = req.query
+    if (!phone) return res.status(400).json({ code: 'INVALID_PARAM', message: '请提供手机号' })
+
+    const customer = await req.db('customers as c')
+      .join('users as u', 'u.id', 'c.user_id')
+      .where({ 'u.phone': phone, 'u.role': 'elder', 'c.is_cancelled': 0 })
+      .select('c.id as customer_id', 'c.name', 'c.room_no', 'c.care_level')
+      .first()
+
+    if (!customer) return res.status(404).json({ code: 'NOT_FOUND', message: '未找到该手机号对应的长辈' })
+    return res.json({ code: 'OK', data: customer })
+  }
+
   // ─── 家属申请绑定老人 ────────────────────────────────────────
   // POST /api/family/apply
   // body: { customer_id, remark? }
@@ -69,8 +85,29 @@ class FamilyController {
       .select(
         'fa.id','fa.status','fa.applied_at','fa.approved_at','fa.revoked_at',
         'fa.can_view_afi','fa.can_view_reports','fa.can_view_points','fa.can_view_tasks','fa.can_view_alerts',
-        'c.id as customer_id','c.name as customer_name','c.room_no','c.avatar'
+        'c.id as customer_id',
+        'c.name','c.gender','c.birth_date','c.room_no','c.avatar',
+        'c.care_level','c.alert_level','c.afi_critical_value'
       )
+
+    // 为每个已批准的老人附上最新 AFI 分
+    const approvedRows = rows.filter(r => r.status === 'approved')
+    if (approvedRows.length > 0) {
+      const ids = approvedRows.map(r => r.customer_id)
+      const afiRows = await req.db('afi_records')
+        .whereIn('customer_id', ids)
+        .where({ is_anomaly: 0, is_deleted: 0 })
+        .orderBy('record_date', 'desc')
+        .select('customer_id', 'afi_value')
+      const afiMap = {}
+      for (const a of afiRows) {
+        if (!afiMap[a.customer_id]) afiMap[a.customer_id] = a.afi_value
+      }
+      for (const r of rows) {
+        r.latest_afi_score = afiMap[r.customer_id] ?? null
+      }
+    }
+
     return res.json({ code: 'OK', data: rows })
   }
 

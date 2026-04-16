@@ -191,8 +191,18 @@ class AssessmentController {
     })
   }
 
+  // ─── 查询可用试卷列表 ────────────────────────────────────────
+  // GET /api/assessments/papers
+  async listPapers(req, res) {
+    const rows = await req.db('exam_papers')
+      .where({ is_published: 1, is_active: 1 })
+      .orderBy('created_at', 'desc')
+      .select('id', 'name', 'level', 'description', 'version', 'question_count')
+    return res.json({ code: 'OK', data: { list: rows, total: rows.length } })
+  }
+
   // ─── 查询老人历史测评列表 ────────────────────────────────────
-  // GET /api/caregiver/assessments?customer_id=xxx
+  // GET /api/assessments?customer_id=xxx
   async list(req, res) {
     const { customer_id, page = 1, pageSize = 10 } = req.query
     if (!customer_id) return res.status(400).json({ code: 'INVALID_PARAM', message: '请指定老人' })

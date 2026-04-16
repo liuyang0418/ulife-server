@@ -5,8 +5,18 @@ class TaskAssignmentController {
 
   // ─── 查询某老人的任务分配列表 ────────────────────────────────
   // GET /api/task-assignments?customer_id=xxx&status=active
+  // 老人角色自动解析 customer_id
   async list(req, res) {
-    const { customer_id, status, page = 1, pageSize = 50 } = req.query
+    const { status, page = 1, pageSize = 50 } = req.query
+    let { customer_id } = req.query
+
+    // 老人角色：自动解析自己的 customer_id
+    if (req.user.role === 'elder') {
+      const c = await req.db('customers').where({ user_id: req.user.id, is_cancelled: 0 }).first('id')
+      if (!c) return res.status(404).json({ code: 'NOT_FOUND', message: '老人档案不存在' })
+      customer_id = c.id
+    }
+
     if (!customer_id) return res.status(400).json({ code: 'INVALID_PARAM', message: '请指定老人' })
 
     await this._checkAccess(req, res, customer_id)
@@ -85,9 +95,10 @@ class TaskAssignmentController {
     return res.json({ code: 'OK', message: `任务已${status === 'active' ? '恢复' : status === 'paused' ? '暂停' : '移除'}` })
   }
 
-  // ─── 内部：管家只能操作自己负责的老人 ──────────────────────────
+  // ─── 内部：老人只能查自己的，管家只能操作负责的老人 ────────────
   async _checkAccess(req, res, customerId) {
     if (req.user.role === 'admin') return
+    if (req.user.role === 'elder') return  // 老人已在 list() 中自动解析
     const ok = await req.db('caregiver_assignments')
       .where({ caregiver_id: req.user.id, customer_id: customerId }).first()
     if (!ok) {

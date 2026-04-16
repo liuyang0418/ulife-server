@@ -9,6 +9,8 @@ const auth   = [authenticate]
 const admin  = [authenticate, requireRole('admin')]
 const family = [authenticate, requireRole('family')]
 
+// 家属按手机号查找老人
+router.get('/find-elder',                           ...family, (r, s, n) => ctrl.findElderByPhone(r, s).catch(n))
 // 家属申请绑定
 router.post('/apply',                           ...family, (r, s, n) => ctrl.apply(r, s).catch(n))
 // 家属查询自己的授权列表
