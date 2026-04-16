@@ -1,5 +1,5 @@
 // src/app.js
-// 优宅·续航智脑 后端服务入口
+// 优宅养·续航智脑 后端服务入口
 
 require('dotenv').config()
 
@@ -97,7 +97,7 @@ async function bootstrap() {
     pointsExpiryNotify.start(db)
 
     app.listen(PORT, () => {
-      logger.info(`🚀 优宅·续航智脑 服务已启动 → http://localhost:${PORT}`)
+      logger.info(`🚀 优宅养·续航智脑 服务已启动 → http://localhost:${PORT}`)
     })
   } catch (err) {
     logger.error(`❌ 服务启动失败：${err.message}`)
